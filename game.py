@@ -99,7 +99,12 @@ def loadGameModule():
             game.colorsensor = True
         elif (args.game=='Sapientino3X'):
             mod = importlib.import_module('Sapientino')
-            game = mod.SapientinoExt(trainsessionname=trainfilename, nvisitpercol=3)
+            game = mod.SapientinoExt(trainsessionname=trainfilename)
+        elif (args.game=='Atari'):
+            print ('rom is ' + args.rom)
+            if ('kung_fu_master.bin' in args.rom):
+                mod = importlib.import_module('KungFuMaster')
+                game = mod.KungFuMaster(trainsessionname=trainfilename, rom=args.rom)
         else:
             print("ERROR: game %s not found." %args.game)
             sys.exit(1)
@@ -145,8 +150,8 @@ def save():
     if game is not None and agent is not None and (not args.eval):
         # filename = trainfilename +"_%05d" % (self.iteration)
         filename = 'data/'+trainfilename
-        savedata = [game.savedata(), agent.savedata()]
-        np.savez(filename, gamedata = savedata[0], agentdata = savedata[1])
+        savedata = [int(game.iteration), int(game.hiscore), float(game.hireward), int(game.elapsedtime), agent.savedata()]
+        np.savez(filename, iter = savedata[0], hiscore = savedata[1], hireward = savedata[2], elapsedtime = savedata[3], agentdata = savedata[4])
         print("Data saved successfully on file %s\n\n\n" %filename)
 
         
@@ -163,7 +168,10 @@ def load(fname, game, agent):
 
     if data is not None:
         try:
-            game.loaddata(data['gamedata'])
+            game.iteration = int(data['iter'])
+            game.hiscore = int(data['hiscore'])
+            game.hireward = float(data['hireward'])
+            game.elapsedtime = int(data['elapsedtime'])
             agent.loaddata(data['agentdata'])
         except:
             print("Can't load data from input file, wrong format.")
@@ -189,9 +197,9 @@ def writeinfo(trainfilename,game,agent,init=True):
         infofile.write("alpha:   %f\n" %(agent.alpha))
         infofile.write("n-step:  %d\n" %(agent.nstepsupdates))
         infofile.write("lambda:  %f\n\n" %(agent.lambdae))
-        infofile.write("\n%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%.3f\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon,agent.alpha,agent.nstepsupdates,agent.lambdae))
+        infofile.write("\n%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon,agent.alpha,agent.nstepsupdates,agent.lambdae))
         #allinfofile.write("%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon,agent.alpha,agent.nstepsupdates,agent.lambdae))
-    else: #if optimalPolicyFound:
+    elif optimalPolicyFound:
         infofile.write("Optimal policy found.\n")
         infofile.write("goal reached:     %d\n" %(game.iteration))
         infofile.write("goal score:       %d\n" %(game.score))
@@ -201,8 +209,19 @@ def writeinfo(trainfilename,game,agent,init=True):
         infofile.write("highest score:    %d\n" %(game.hiscore))
         infofile.write("elapsed time:     %d\n\n" %(game.elapsedtime))
 
-        infofile.write("\n%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%.3f,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon, agent.alpha,agent.nstepsupdates,agent.lambdae,game.iteration,game.score,game.cumreward, game.numactions,game.hireward,game.hiscore,game.elapsedtime))
-        allinfofile.write("%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%.3f,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon, agent.alpha,agent.nstepsupdates,agent.lambdae,game.iteration,game.score,game.cumreward, game.numactions,game.hireward,game.hiscore,game.elapsedtime))
+        infofile.write("\n%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon, agent.alpha,agent.nstepsupdates,agent.lambdae,game.iteration,game.score,game.cumreward, game.numactions,game.hireward,game.hiscore,game.elapsedtime))
+        allinfofile.write("%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon, agent.alpha,agent.nstepsupdates,agent.lambdae,game.iteration,game.score,game.cumreward, game.numactions,game.hireward,game.hiscore,game.elapsedtime))
+    else:
+        infofile.write("last iteration:   %d\n" %(game.iteration))
+        infofile.write("last score:       %d\n" %(game.score))
+        infofile.write("last reward:      %.2f\n" %(game.cumreward))
+        infofile.write("last n. actions:  %d\n" %(game.numactions))
+        infofile.write("highest reward:   %.2f\n" %(game.hireward))
+        infofile.write("highest score:    %d\n" %(game.hiscore))
+        infofile.write("elapsed time:     %d\n\n" %(game.elapsedtime))
+
+        infofile.write("\n%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f,,,,,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon,agent.alpha,agent.nstepsupdates,agent.lambdae, game.iteration,game.score,game.cumreward,game.numactions,game.hireward,game.hiscore,game.elapsedtime))
+        allinfofile.write("%s,%s,%s,%d,%d,%s,%.3f,%.3f,%.3f,%d,%f,,,,,%d,%d,%.2f,%d,%.2f,%d,%d\n" %(strtime,trainfilename,args.game,args.rows,args.cols,agent.name,agent.gamma,agent.epsilon,agent.alpha,agent.nstepsupdates,agent.lambdae, game.iteration,game.score,game.cumreward,game.numactions,game.hireward,game.hiscore,game.elapsedtime))
     
     infofile.flush()
     infofile.close()
@@ -223,7 +242,7 @@ def execution_step(game, agent):
 
 
 # learning process
-def learn(game, agent, maxtime=-1, stopongoal=False):
+def learn(game, agent, maxtime=-1):
     global optimalPolicyFound
     
     run = True
@@ -235,13 +254,10 @@ def learn(game, agent, maxtime=-1, stopongoal=False):
     exstart = time.time()
     elapsedtime0 = game.elapsedtime
 
-    if (maxtime>0 and game.elapsedtime >= maxtime):
-        run = False
-    elif (game.iteration>0 and not game.debug): # try an optimal run
+    if (game.iteration>0 and not game.debug): # try an optimal run
         next_optimal = True
         game.iteration -= 1
-
-
+        
     while (run and (args.niter<0 or game.iteration<=args.niter) and not game.userquit):
 
         game.reset() # increment game.iteration
@@ -277,13 +293,13 @@ def learn(game, agent, maxtime=-1, stopongoal=False):
         # end of experiment
         if (agent.optimal and game.goal_reached()):
             optimalPolicyFound = True
-            if (agent.gamma==1 or stopongoal):
+            if (agent.gamma==1):
                 run = False
             #elif (iter_goal==0):
             #    iter_goal = game.iteration
             #elif (game.iteration>int(1.5*iter_goal)):
             #    run = False
-        elif (maxtime>0 and game.elapsedtime >= maxtime):
+        elif (maxtime>0 and game.elapsedtime > maxtime):
             run = False
 
         last_goalreached = game.goal_reached()
@@ -297,6 +313,9 @@ def learn(game, agent, maxtime=-1, stopongoal=False):
                 print("Q[%d]" %a)
                 print("       ",agent.Q[a].get_weights())
 
+    exend = time.time()
+    return  exend - exstart   # experiment time [seconds]
+
 
 
 
@@ -305,10 +324,6 @@ def evaluate(game, agent, n): # evaluate best policy n times (no updates)
     i=0
     run = True
     game.sleeptime = 0.05
-    if (game.gui_visible):
-        game.sleeptime = 0.5
-        game.pause = True
-        
     while (i<n and run):
         game.reset()
         game.draw()
@@ -317,22 +332,10 @@ def evaluate(game, agent, n): # evaluate best policy n times (no updates)
         agent.optimal = True
         while (run and not game.finished):
             run = game.input()
-            if game.pause:
-                time.sleep(1)
-                continue
             execution_step(game, agent)
             game.draw()
             time.sleep(game.sleeptime)        
         game.print_report(printall=True)
-        n=3
-        i=0
-        while (i<n):
-            time.sleep(1)
-            game.input()
-            if game.pause:
-                time.sleep(1)
-            i += 1
-
         time.sleep(3)
         i += 1
     agent.optimal = False
@@ -358,7 +361,7 @@ if __name__ == "__main__":
     parser.add_argument('--gui', help='GUI shown at start [default: hidden]', action='store_true')
     parser.add_argument('--sound', help='Sound enabled', action='store_true')
     parser.add_argument('--eval', help='Evaluate best policy', action='store_true')
-    parser.add_argument('--stopongoal', help='Stop experiment when goal is reached', action='store_true')
+    parser.add_argument('-rom', type=str, help='file name of the Atari 2600 rom')
     #parser.add_argument('--enableRA', help='enable Reward Automa', action='store_true')
     #parser.add_argument('-maxVfu', type=int, help='max visits for forward update of RA-Q tables [default: 0]', default=0)
 
@@ -399,7 +402,7 @@ if __name__ == "__main__":
     if (args.eval):
         evaluate(game, agent, 10)
     else:    
-        learn(game, agent, args.maxtime, args.stopongoal)
+        et = learn(game, agent, args.maxtime)
         writeinfo(trainfilename,game,agent,init=False)
 
     print("Experiment terminated !!!\n")
