@@ -1,3 +1,19 @@
+# Reinforcement Learning Project for MSc AI and Robotics in Sapienza University of Rome
+Fork of RLgames, an excelent reinforcement learning environment developed by Professor Luca Iocchi.
+
+My fork adapts Prof. Iocchi's code to be able to play games from the [Arcade Learning Environment](https://github.com/mgbellemare/Arcade-Learning-Environment.git).
+
+This projects should sit in the ALE root installation folder and therefore ALE should be installed and working to be able to use it. Game roms are not included in the ALE project, so they should be downloaded separately and placed in the folder 'Roms'
+
+In this case, the Kung Fu Master game was modeled using the RAM memory information as observations to create the states for reinforcement learning. Reward is based on both the game score and custom reward to achieve the goal (clear all levels).
+
+Any new games can be added by adding a new python game file, replacing the RAM bytes according to the new game and amending the file game.py to accept the new game file.
+
+An example of the command to run the ALE game:
+```
+python game.py Atari Q kfm2_Q_g09 -gamma 0.9 -niter 2000 -rom ./Roms/kung_fu_master.bin
+```
+
 # RLgames
 
 Examples of use of RL agents for different games.
